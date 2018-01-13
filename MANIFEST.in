@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include otrsconnect *.css
+recursive-include otrsconnect *.csv
+recursive-include otrsconnect *.html
+recursive-include otrsconnect *.ico
+recursive-include otrsconnect *.js
+recursive-include otrsconnect *.json
+recursive-include otrsconnect *.md
+recursive-include otrsconnect *.png
+recursive-include otrsconnect *.py
+recursive-include otrsconnect *.svg
+recursive-include otrsconnect *.txt
+recursive-exclude otrsconnect *.pyc
