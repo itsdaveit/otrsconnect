@@ -6,7 +6,7 @@ def get_data():
 	return [
 		{
 			"module_name": "OTRSConnect",
-			"color": "blue",
+			"color": "CadetBlue",
 			"icon": "octicon octicon-file-directory",
 			"type": "module",
 			"label": _("OTRSConnect")
