@@ -15,12 +15,6 @@ sys.setdefaultencoding('utf-8')
 class OTRSConnectFunctions(Document):
 
 
-    def unescape(self, s):
-        p = htmllib.HTMLParser(None)
-        p.save_bgn()
-        p.feed(s)
-        return p.save_end()
-
     def get_closed_tickets_dict(self):
         settings = frappe.get_doc("OTRSConnect Settings")
         otrsdb = frappe.database.Database(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
@@ -41,19 +35,83 @@ class OTRSConnectFunctions(Document):
         return otrsdb.sql(sql, as_dict=1)
 
     def set_ERPNext_OTRS_Tickets(self, closed_tickets_dict):
+        run_count = 0
         for ticket in closed_tickets_dict:
+            percent = run_count * 100 / len(closed_tickets_dict)
+            print percent
+            frappe.publish_progress(percent, "verarbeite Tickets", "OTRSConnect Functions", "create_delivery_notes")
             ERPNext_tickets = frappe.get_all("OTRSConnect Ticket", filters={"id": ticket["id"]})
             if len(ERPNext_tickets) == 0:
                 frappe_doctype_dict = {"doctype": "OTRSConnect Ticket"}
                 ticket["id"] = str(ticket["id"])
+                ticket["status"] = "fetched"
                 frappe_doctype_dict.update(ticket)
                 ticket_doc = frappe.get_doc(frappe_doctype_dict)
                 inserted_ticket_doc = ticket_doc.insert()
                 self.link_ERPNext_OTRS_Ticket(inserted_ticket_doc)
                 self.set_ERPNext_OTRS_Articles(self.get_Articles_for_Ticket_dict(inserted_ticket_doc))
-
             else:
                 frappe.msgprint("Ticket " + str(ticket["id"]) + " bereits vorhanden")
+            run_count += 1
+
+    def parse_article_body(self, article_a_body):
+        description = ""
+        lines = article_a_body.splitlines()
+        for line in lines:
+            if line.startswith("#"):
+                description = description + str(line + "<br>")
+        return description
+
+
+    def get_items_for_delivery_note_from_articles(self, ticket):
+        articles = frappe.get_all("OTRSConnect Article", filters={"ticket_id": ticket.name})
+        delivery_note_itmes_list = []
+        for article_name in articles:
+            article = frappe.get_doc("OTRSConnect Article", article_name.name)
+            user = frappe.get_doc("OTRSConnect User", str(article.create_by))
+            employee_name = frappe.get_doc("Employee", user.erpnext_employee).employee_name
+            description = self.parse_article_body(article.a_body)
+            #Check whether remote (rs) or On-Site (os) service
+            item = user.erpnext_os_item
+            if "remote" in description.splitlines()[0] or "Remote" in description.splitlines()[0]:
+                item = user.erpnext_rs_item
+            description = ("Arbeitszeit zu Ticket#" + ticket.tn + "<br>"
+                            "Mitarbeiter: " + employee_name + "<br>"
+                            "Erfasst:" + str(article.create_time) + "<br>"
+                            + description)
+            #item_doc = frappe.get_doc("Item", item.name)
+            delivery_note_item = frappe.get_doc({"doctype": "Delivery Note Item",
+                                                "item_code": item,
+                                                "description": description,
+                                                "qty": float(article.time_unit) / float(4),
+                                                })
+            delivery_note_itmes_list.append(delivery_note_item)
+        return delivery_note_itmes_list
+
+    def set_delivery_note_for_tickets(self):
+        settings = frappe.get_doc("OTRSConnect Settings")
+        ERPNext_fetched_tickets = frappe.get_all("OTRSConnect Ticket", filters={"status": "fetched",
+                                                                                "erpnext_customer": ("!=", "")})
+        for ticketname in ERPNext_fetched_tickets:
+            ticket_doc = frappe.get_doc("OTRSConnect Ticket", ticketname)
+            delivery_notes = frappe.get_all("Delivery Note", filters={"title": settings.delivery_note_title,
+                                                                        "customer": ticket_doc.erpnext_customer,
+                                                                        "status": "Draft"})
+
+            if len(delivery_notes) == 0:
+                delivery_note_doc = frappe.get_doc({"doctype": "Delivery Note",
+                                                    "customer": ticket_doc.erpnext_customer,
+                                                    "title": settings.delivery_note_title,
+                                                    "status": "Draft"
+                                                    })
+                for item in self.get_items_for_delivery_note_from_articles(ticket_doc):
+                    delivery_note_doc.append("items", item)
+                delivery_note_doc.insert()
+            else:
+                delivery_note_doc = frappe.get_doc("Delivery Note", delivery_notes[0])
+                for item in self.get_items_for_delivery_note_from_articles(ticket_doc):
+                    delivery_note_doc.append("items", item)
+                delivery_note_doc.save()
 
 
     def link_ERPNext_OTRS_Tickets(self, OTRSConnect_Tickets_dict):
@@ -109,13 +167,10 @@ class OTRSConnectFunctions(Document):
         pass
 
 
-
-
-
-
-
-
     def fetch_tickets(self):
         closed_tickets_dict = self.get_closed_tickets_dict()
         if len(closed_tickets_dict) >= 1:
             self.set_ERPNext_OTRS_Tickets(closed_tickets_dict)
+
+    def create_delivery_notes(self):
+        self.set_delivery_note_for_tickets()
