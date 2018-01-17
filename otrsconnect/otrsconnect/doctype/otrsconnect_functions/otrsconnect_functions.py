@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.database import Database
+from time import sleep
 import htmllib
 import sys
 reload(sys)
@@ -37,9 +38,9 @@ class OTRSConnectFunctions(Document):
     def set_ERPNext_OTRS_Tickets(self, closed_tickets_dict):
         run_count = 0
         for ticket in closed_tickets_dict:
+            run_count += 1
             percent = run_count * 100 / len(closed_tickets_dict)
-            print percent
-            frappe.publish_progress(percent, "verarbeite Tickets", "OTRSConnect Functions", "create_delivery_notes")
+            frappe.publish_progress(percent, "verarbeite Tickets")
             ERPNext_tickets = frappe.get_all("OTRSConnect Ticket", filters={"id": ticket["id"]})
             if len(ERPNext_tickets) == 0:
                 frappe_doctype_dict = {"doctype": "OTRSConnect Ticket"}
@@ -50,15 +51,14 @@ class OTRSConnectFunctions(Document):
                 inserted_ticket_doc = ticket_doc.insert()
                 self.link_ERPNext_OTRS_Ticket(inserted_ticket_doc)
                 self.set_ERPNext_OTRS_Articles(self.get_Articles_for_Ticket_dict(inserted_ticket_doc))
-            else:
-                frappe.msgprint("Ticket " + str(ticket["id"]) + " bereits vorhanden")
-            run_count += 1
+        frappe.msgprint(str(run_count) + " Tickets verarbeitet.")
 
     def parse_article_body(self, article_a_body):
         description = ""
         lines = article_a_body.splitlines()
         for line in lines:
             if line.startswith("#"):
+                line = "-" + line[1:]
                 description = description + str(line + "<br>")
         return description
 
@@ -77,7 +77,7 @@ class OTRSConnectFunctions(Document):
                 item = user.erpnext_rs_item
             description = ("Arbeitszeit zu Ticket#" + ticket.tn + "<br>"
                             "Mitarbeiter: " + employee_name + "<br>"
-                            "Erfasst:" + str(article.create_time) + "<br>"
+                            "Erfasst: " + article.create_time.strftime("%d.%m.%Y %H:%M") + "<br>"
                             + description)
             #item_doc = frappe.get_doc("Item", item.name)
             delivery_note_item = frappe.get_doc({"doctype": "Delivery Note Item",
@@ -92,7 +92,13 @@ class OTRSConnectFunctions(Document):
         settings = frappe.get_doc("OTRSConnect Settings")
         ERPNext_fetched_tickets = frappe.get_all("OTRSConnect Ticket", filters={"status": "fetched",
                                                                                 "erpnext_customer": ("!=", "")})
+        print(len(ERPNext_fetched_tickets))
+        run_count = 0
         for ticketname in ERPNext_fetched_tickets:
+            percent = run_count * 100 / len(ERPNext_fetched_tickets)
+            run_count += 1
+            frappe.publish_progress(percent, "verarbeite Tickets")
+
             ticket_doc = frappe.get_doc("OTRSConnect Ticket", ticketname)
             delivery_notes = frappe.get_all("Delivery Note", filters={"title": settings.delivery_note_title,
                                                                         "customer": ticket_doc.erpnext_customer,
@@ -112,6 +118,11 @@ class OTRSConnectFunctions(Document):
                 for item in self.get_items_for_delivery_note_from_articles(ticket_doc):
                     delivery_note_doc.append("items", item)
                 delivery_note_doc.save()
+            ticket_doc.status = "delivered"
+            ticket_doc.save()
+            ticket_doc.submit()
+        frappe.msgprint(str(run_count) + " Tickets verarbeitet.")
+
 
 
     def link_ERPNext_OTRS_Tickets(self, OTRSConnect_Tickets_dict):
