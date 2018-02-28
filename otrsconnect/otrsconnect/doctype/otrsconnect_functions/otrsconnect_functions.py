@@ -76,8 +76,7 @@ class OTRSConnectFunctions(Document):
             try:
                 description_lines = description.splitlines()[0]
             except IndexError:
-                frappe.throw("Fehler in Article " + article_name + " aus Ticket " + ticket.name +
-                            ". Länge der Beschreibung: " + str(len(description)))
+                frappe.throw("Fehler in Article " + article_name + " aus Ticket " + ticket.name)
             if "remote" in description_lines or "Remote" in description_lines:
                 item = user.erpnext_rs_item
             description = ("Arbeitszeit zu Ticket#" + ticket.tn + "<br>"
