@@ -76,7 +76,11 @@ class OTRSConnectFunctions(Document):
             try:
                 description_lines = description.splitlines()[0]
             except IndexError:
-                frappe.throw("Fehler in Article " + article_name + " aus Ticket " + ticket.name)
+                frappe.throw("Fehler in OTRS Article " + article_name.name + " aus OTRS Ticket " + ticket.name + "<br>" +
+                            "Keine Arbeitsposition mit # erfasst, aber Arbeitszeit gebucht.<br>" +
+                            "<a href=\"" + frappe.utils.get_url() + "/desk#Form/OTRSConnect%20Article/" + article_name.name +
+                            "\"><b>fehlerhaften OTRS Article aufrufen</b></a>" )
+
             if "remote" in description_lines or "Remote" in description_lines:
                 item = user.erpnext_rs_item
             description = ("Arbeitszeit zu Ticket#" + ticket.tn + "<br>"
