@@ -73,8 +73,11 @@ class OTRSConnectFunctions(Document):
             description = self.parse_article_body(article.a_body)
             #Check whether remote (rs) or On-Site (os) service
             item = user.erpnext_os_item
-            
-            description_lines = description.splitlines()[0]
+            try:
+                description_lines = description.splitlines()[0]
+            except IndexError:
+                frappe.throw("Fehler in Article " + article_name + " aus Ticket " + ticket.name +
+                            ". Länge der Beschreibung: " + str(len(description)))
             if "remote" in description_lines or "Remote" in description_lines:
                 item = user.erpnext_rs_item
             description = ("Arbeitszeit zu Ticket#" + ticket.tn + "<br>"
