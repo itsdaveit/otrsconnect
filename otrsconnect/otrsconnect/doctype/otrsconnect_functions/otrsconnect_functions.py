@@ -116,7 +116,8 @@ class OTRSConnectFunctions(Document):
                 delivery_note_doc = frappe.get_doc({"doctype": "Delivery Note",
                                                     "customer": ticket_doc.erpnext_customer,
                                                     "title": settings.delivery_note_title,
-                                                    "status": "Draft"
+                                                    "status": "Draft",
+                                                    "company": frappe.get_doc("Global Defaults").default_company
                                                     })
                 for item in self.get_items_for_delivery_note_from_articles(ticket_doc):
                     delivery_note_doc.append("items", item)
