@@ -7,10 +7,10 @@ import frappe
 from frappe.model.document import Document
 from frappe.database import Database
 from time import sleep
-import htmllib
+#import htmllib
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 
 class OTRSConnectFunctions(Document):
@@ -175,7 +175,7 @@ class OTRSConnectFunctions(Document):
                 #article["a_to"] = self.unescape(article["a_to"])
                 #article["a_body"] = self.unescape(article["a_body"])
                 frappe_doctype_dict.update(article)
-                print frappe_doctype_dict
+                print(frappe_doctype_dict)
                 article_doc = frappe.get_doc(frappe_doctype_dict)
                 inserted_article_doc = article_doc.insert()
                 #self.link_ERPNext_OTRS_Ticket(inserted_ticket_doc)
