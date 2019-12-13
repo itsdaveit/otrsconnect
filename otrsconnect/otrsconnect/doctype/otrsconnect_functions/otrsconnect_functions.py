@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from frappe.database import Database
+from frappe.database import database
 from time import sleep
 #import htmllib
 import sys
@@ -18,7 +18,7 @@ class OTRSConnectFunctions(Document):
 
     def get_closed_tickets_dict(self):
         settings = frappe.get_doc("OTRSConnect Settings")
-        otrsdb = frappe.database.Database(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
+        otrsdb = frappe.database.database(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
         otrsdb.begin()
         otrsdb.use(settings.db_name)
         sql = ("SELECT DISTINCT ticket.id, ticket.tn, ticket.title, "

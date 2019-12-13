@@ -7,7 +7,7 @@ def get_data():
 		{
 			"module_name": "OTRSConnect",
 			"color": "CadetBlue",
-			"icon": "octicon octicon-file-directory",
+			"icon": "octicon octicon-file-symlink-file",
 			"type": "module",
 			"label": _("OTRSConnect")
 		}
