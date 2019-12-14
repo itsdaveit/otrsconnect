@@ -18,7 +18,7 @@ class OTRSConnectFunctions(Document):
 
     def get_closed_tickets_dict(self):
         settings = frappe.get_doc("OTRSConnect Settings")
-        otrsdb = frappe.database.database(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
+        otrsdb = database.Database(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
         otrsdb.begin()
         otrsdb.use(settings.db_name)
         sql = ("SELECT DISTINCT ticket.id, ticket.tn, ticket.title, "
