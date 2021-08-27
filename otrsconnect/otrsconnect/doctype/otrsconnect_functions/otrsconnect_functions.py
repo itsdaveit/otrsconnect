@@ -166,7 +166,12 @@ class OTRSConnectFunctions(Document):
 
 
     def link_ERPNext_OTRS_Ticket(self, OTRSConnect_Ticket):
-            if str(OTRSConnect_Ticket.customer_id) == "":
+
+            if OTRSConnect_Ticket.customer_id == None:
+                frappe.msgprint("Keine Kundenummer vorhanden für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.tn))
+                return False
+
+            if OTRSConnect_Ticket.customer_id == "":
                 frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
                 return False
             naming_series = "CUST-" + str(OTRSConnect_Ticket.customer_id)
@@ -175,7 +180,7 @@ class OTRSConnectFunctions(Document):
                 OTRSConnect_Ticket.erpnext_customer = naming_series
                 OTRSConnect_Ticket.save()
             else:
-                frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + OTRSConnect_Ticket.customer_id + "<br>" + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
+                frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.customer_id) + "<br>" + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
 
     def get_Articles_for_Ticket_dict(self, OTRSConnect_Ticket):
         settings = frappe.get_doc("OTRSConnect Settings")
