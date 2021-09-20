@@ -15,6 +15,7 @@ import sys
 
 class OTRSConnectFunctions(Document):
 
+    @frappe.whitelist()
     def test_db_connection(self):
         settings = frappe.get_doc("OTRSConnect Settings")
         otrsdb = get_db(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
@@ -213,11 +214,12 @@ class OTRSConnectFunctions(Document):
                 frappe.msgprint("Artikel " + article["id"] + " bereits vorhanden")
         pass
 
-
+    @frappe.whitelist()
     def fetch_tickets(self):
         closed_tickets_dict = self.get_closed_tickets_dict()
         if len(closed_tickets_dict) >= 1:
             self.set_ERPNext_OTRS_Tickets(closed_tickets_dict)
 
+    @frappe.whitelist()
     def create_delivery_notes(self):
         self.set_delivery_note_for_tickets()
