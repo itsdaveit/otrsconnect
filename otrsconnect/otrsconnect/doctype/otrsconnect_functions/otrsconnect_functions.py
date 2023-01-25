@@ -225,6 +225,9 @@ class OTRSConnectFunctions(Document):
     @frappe.whitelist()
     def fetch_tickets(self):
         closed_tickets_dict = self.get_closed_tickets_dict()
+        for el in closed_tickets_dict:
+            a = el["title"][0:140]
+            el["title"] = a
         if len(closed_tickets_dict) >= 1:
             self.set_ERPNext_OTRS_Tickets(closed_tickets_dict)
 
