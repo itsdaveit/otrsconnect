@@ -6,7 +6,7 @@
  "field_order": [
   "import_functions",
   "fetch_tickets",
-  "create_delivery_notes",
+  "create_service_reports",
   "test_db_connection"
  ],
  "fields": [
@@ -22,10 +22,10 @@
    "options": "fetch_tickets"
   },
   {
-   "fieldname": "create_delivery_notes",
+   "fieldname": "create_service_reports",
    "fieldtype": "Button",
-   "label": "Create Delivery Notes",
-   "options": "create_delivery_notes"
+   "label": "Create Service Reports",
+   "options": "create_service_reports"
   },
   {
    "fieldname": "test_db_connection",
