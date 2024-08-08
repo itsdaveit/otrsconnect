@@ -8,6 +8,7 @@ from frappe.client import insert
 from frappe.model.document import Document
 from frappe.database import get_db
 from datetime import datetime, date, timedelta
+from msp.tools import update_tickets_and_articles
 from time import sleep
 #import htmllib
 import sys
@@ -131,7 +132,8 @@ class OTRSConnectFunctions(Document):
                                 "qty": float(article.time_unit) / float(4),
                                 "report_type": rep_ty,
                                 "work_end":article.create_time,
-                                "ticket":ticket.tn
+                                "ticket":ticket.name,
+                                "article": article.name
                                     }
             service_report_items_list.append(service_report_item)
         return service_report_items_list
@@ -174,7 +176,7 @@ class OTRSConnectFunctions(Document):
 
     def set_service_report_for_tickets(self):
         settings = frappe.get_doc("OTRSConnect Settings")
-        ERPNext_fetched_tickets = frappe.get_all("OTRSConnect Ticket", filters={"status": "fetched",
+        ERPNext_fetched_tickets = frappe.get_all("OTRSConnect Ticket", filters={"ticket_state_id": 2,"status": "fetched",
                                                                                 "erpnext_customer": ("!=", "")})
         print(len(ERPNext_fetched_tickets))
         run_count = 0
@@ -198,6 +200,7 @@ class OTRSConnectFunctions(Document):
                                     "status": "Draft",
                                     "employee": employee,
                                     "report_type":items[0]["report_type"],
+                                    "ofork_ticket_number": items[0]["ticket"],
                                     "work": []
                                     }
                     service_report_doc_list.append(service_report_dict)
@@ -207,7 +210,10 @@ class OTRSConnectFunctions(Document):
                     work_begin = work_end - timedelta(hours=item["qty"])
                     work = {"begin": work_begin,
                             "end":work_end,
-                            "description": item["description"]}
+                            "description": item["description"],
+                            "otrs_ticket": item["ticket"],
+                            "otrs_article": item["article"]
+                            }
                     print(work)
                     print(item["employee"])
                     ind_empl = (next((i for i, x in enumerate(service_report_doc_list) if x["employee"] == item["employee"]), None))
@@ -222,63 +228,24 @@ class OTRSConnectFunctions(Document):
             ticket_doc.submit()
         frappe.db.commit()
         frappe.msgprint(str(run_count) + " Tickets verarbeitet.")
-                #service_report_doc_list =[]
-                # work_end = items[0]["work_end"]
-                # work_begin = work_end - timedelta(hours=items[0]["qty"])
-
-                # service_report_dict = {"doctype": "Service Report",
-                #                     "customer": ticket_doc.erpnext_customer,
-                #                     "titel": "Ticket " +items[0]["ticket"],
-                #                     "status": "Draft",
-                #                     "employee": items[0]["employee"],
-                #                     "report_type":items[0]["report_type"]}
-                # for item in items:
-                #     if item["employee"]==
-                #                                 "work":[{"begin": work_begin,
-                #                                         "end":work_end,
-                #                                         "description": items[0]["description"]}]}
-
-        #     for item in self.get_items_for_delivery_note_from_articles(ticket_doc):
-        #         print(item)
-        #         work_end = item["work_end"]
-        #         work_begin = work_end - timedelta(hours=item["qty"])
-               
-                
-        #         service_report_doc = frappe.get_doc({"doctype": "Service Report",
-        #                                         "customer": ticket_doc.erpnext_customer,
-        #                                         "titel": "Ticket " +item["ticket"],
-        #                                         "status": "Draft",
-        #                                         "employee": item["employee"],
-        #                                         "report_type":item["report_type"],
-        #                                         "work":[{"begin": work_begin,
-        #                                                 "end":work_end,
-        #                                                 "description": item["description"]}]
-        #                                         })
-        #         service_report_doc.save()                           
-        #     ticket_doc.status = "delivered"
-        #     ticket_doc.save()
-        #     ticket_doc.submit()
-        # frappe.msgprint(str(run_count) + " Tickets verarbeitet.")
-
-    def link_ERPNext_OTRS_Tickets(self, OTRSConnect_Tickets_dict):
-        pass
+              
 
     def link_ERPNext_OTRS_Ticket(self, OTRSConnect_Ticket):
 
-            if OTRSConnect_Ticket.customer_id == None:
-                frappe.msgprint("Keine Kundenummer vorhanden für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.tn))
-                return False
+        if OTRSConnect_Ticket.customer_id == None:
+            frappe.msgprint("Keine Kundenummer vorhanden für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.tn))
+            return False
 
-            if OTRSConnect_Ticket.customer_id == "":
-                frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
-                return False
-            naming_series = "CUST-" + str(OTRSConnect_Ticket.customer_id)
-            customers_for_customer_id = frappe.get_all("Customer", filters={"naming_series": naming_series})
-            if len(customers_for_customer_id) == 1:
-                OTRSConnect_Ticket.erpnext_customer = naming_series
-                OTRSConnect_Ticket.save()
-            else:
-                frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.customer_id) + "<br>" + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
+        if OTRSConnect_Ticket.customer_id == "":
+            frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
+            return False
+        naming_series = "CUST-" + str(OTRSConnect_Ticket.customer_id)
+        customers_for_customer_id = frappe.get_all("Customer", filters={"naming_series": naming_series})
+        if len(customers_for_customer_id) == 1:
+            OTRSConnect_Ticket.erpnext_customer = naming_series
+            OTRSConnect_Ticket.save()
+        else:
+            frappe.msgprint("Kundennummerzuweisung nicht eindeutig möglich für: " + str(OTRSConnect_Ticket.customer_id) + "<br>" + str(OTRSConnect_Ticket.title) + "<br>" + str(OTRSConnect_Ticket.id))
 
     def get_Articles_for_Ticket_dict(self, OTRSConnect_Ticket):
         settings = frappe.get_doc("OTRSConnect Settings")
@@ -319,11 +286,15 @@ class OTRSConnectFunctions(Document):
                 frappe.msgprint("Artikel " + article["id"] + " bereits vorhanden")
         pass
 
+    # @frappe.whitelist()
+    # def fetch_tickets(self):
+    #     closed_tickets_dict = self.get_closed_tickets_dict()
+    #     if len(closed_tickets_dict) >= 1:
+    #         self.set_ERPNext_OTRS_Tickets(closed_tickets_dict)
+
     @frappe.whitelist()
     def fetch_tickets(self):
-        closed_tickets_dict = self.get_closed_tickets_dict()
-        if len(closed_tickets_dict) >= 1:
-            self.set_ERPNext_OTRS_Tickets(closed_tickets_dict)
+        update_tickets_and_articles()
 
     @frappe.whitelist()
     def create_service_reports(self):
