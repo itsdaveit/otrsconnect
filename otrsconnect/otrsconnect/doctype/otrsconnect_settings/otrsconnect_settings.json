@@ -31,7 +31,7 @@
   },
   {
    "fieldname": "db_password",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "label": "DP Password"
   },
   {
@@ -80,7 +80,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-08-05 12:03:55.962308",
+ "modified": "2024-08-13 08:24:16.803204",
  "modified_by": "Administrator",
  "module": "OTRSConnect",
  "name": "OTRSConnect Settings",

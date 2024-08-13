@@ -21,7 +21,7 @@ class OTRSConnectFunctions(Document):
     @frappe.whitelist()
     def test_db_connection(self):
         settings = frappe.get_doc("OTRSConnect Settings")
-        otrsdb = get_db(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
+        otrsdb = get_db(host=settings.otrs_host, user=settings.db_user, password=settings.get_password("db_password"))
         print(settings.otrs_host)
         print(settings.db_user)
         print(settings.db_password)
@@ -55,7 +55,7 @@ class OTRSConnectFunctions(Document):
         print(settings.db_user)
         print(settings.db_password)
 
-        otrsdb = get_db(host=settings.otrs_host, user=settings.db_user, password=settings.db_password)
+        otrsdb = get_db(host=settings.otrs_host, user=settings.db_user, password=settings.get_password("db_password"))
         otrsdb.connect()
         otrsdb.use(settings.db_name)
         sql = ("SELECT DISTINCT ticket.id, ticket.tn, ticket.title, "
