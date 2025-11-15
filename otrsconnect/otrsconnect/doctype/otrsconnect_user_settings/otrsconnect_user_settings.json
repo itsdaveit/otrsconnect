@@ -17,7 +17,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-13 08:48:08.907060",
+ "modified": "2024-11-28 08:40:30.732828",
  "modified_by": "Administrator",
  "module": "OTRSConnect",
  "name": "OTRSConnect User Settings",
@@ -40,6 +40,16 @@
    "print": 1,
    "read": 1,
    "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts User",
    "share": 1,
    "write": 1
   }
